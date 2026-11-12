@@ -128,19 +128,19 @@ if (-not $settings.Projects.Count) {
     $settings.ActiveProjectRoot = $defaultProjectRoot
 }
 else {
-    foreach ($profile in $settings.Projects) {
-        if ([string]::IsNullOrWhiteSpace($profile.ProjectRoot)) {
+    foreach ($projectProfile in $settings.Projects) {
+        if ([string]::IsNullOrWhiteSpace($projectProfile.ProjectRoot)) {
             throw 'Saved project profile is missing its project root.'
         }
-        $profile.ProjectRoot = Get-NormalizedProjectRoot -Path $profile.ProjectRoot
+        $projectProfile.ProjectRoot = Get-NormalizedProjectRoot -Path $projectProfile.ProjectRoot
         foreach ($pathProperty in @('StagingRoot', 'ZxpRoot', 'CertificatesRoot')) {
-            if ([string]::IsNullOrWhiteSpace([string]$profile.$pathProperty)) {
+            if ([string]::IsNullOrWhiteSpace([string]$projectProfile.$pathProperty)) {
                 $defaultFolder = switch ($pathProperty) {
                     'StagingRoot' { 'staging' }
                     'ZxpRoot' { 'zxp_packages' }
                     'CertificatesRoot' { 'certificates' }
                 }
-                $profile.$pathProperty = Join-Path $profile.ProjectRoot $defaultFolder
+                $projectProfile.$pathProperty = Join-Path $projectProfile.ProjectRoot $defaultFolder
             }
         }
     }
@@ -228,21 +228,21 @@ function Save-ActiveProjectSettings {
         return
     }
     $activeRoot = Get-NormalizedProjectRoot -Path $projectPathBox.Text.Trim()
-    $profile = @($settings.Projects | Where-Object {
+    $projectProfile = @($settings.Projects | Where-Object {
         $_.ProjectRoot.Equals($activeRoot, [System.StringComparison]::OrdinalIgnoreCase)
     }) | Select-Object -First 1
-    if (-not $profile) {
+    if (-not $projectProfile) {
         throw "Active project is not registered: $activeRoot"
     }
-    $profile.ProjectRoot = $activeRoot
-    $profile.StagingRoot = $stagingPathBox.Text.Trim()
-    $profile.ZxpRoot = $zxpPathBox.Text.Trim()
-    $profile.CertificatesRoot = $certificatesPathBox.Text.Trim()
+    $projectProfile.ProjectRoot = $activeRoot
+    $projectProfile.StagingRoot = $stagingPathBox.Text.Trim()
+    $projectProfile.ZxpRoot = $zxpPathBox.Text.Trim()
+    $projectProfile.CertificatesRoot = $certificatesPathBox.Text.Trim()
     $selectedStaging = Get-SelectedStaging
-    $profile.SelectedStagingVersion = if ($selectedStaging) { [string]$selectedStaging.Version } else { '' }
+    $projectProfile.SelectedStagingVersion = if ($selectedStaging) { [string]$selectedStaging.Version } else { '' }
     $selectedZxp = Get-SelectedZxp
-    $profile.SelectedZxpPath = if ($selectedZxp) { [string]$selectedZxp.Path } else { '' }
-    $profile.SelectedCertificate = if (Get-SelectedCertificateSerial) { Get-SelectedCertificateSerial } else { '' }
+    $projectProfile.SelectedZxpPath = if ($selectedZxp) { [string]$selectedZxp.Path } else { '' }
+    $projectProfile.SelectedCertificate = if (Get-SelectedCertificateSerial) { Get-SelectedCertificateSerial } else { '' }
 }
 
 function Get-PlayerDebugModeKeyPath {
@@ -435,22 +435,22 @@ function Update-ProjectSelector {
     $script:suppressProjectSwitch = $true
     try {
     $projectSelector.Items.Clear()
-    foreach ($profile in $settings.Projects) {
+    foreach ($projectProfile in $settings.Projects) {
         $metadata = $null
         try {
-            $metadata = Get-ZxpProjectMetadata -ProjectRoot $profile.ProjectRoot
-            $label = "$($metadata.BundleName) ($($metadata.Version)) - $($profile.ProjectRoot)"
+            $metadata = Get-ZxpProjectMetadata -ProjectRoot $projectProfile.ProjectRoot
+            $label = "$($metadata.BundleName) ($($metadata.Version)) - $($projectProfile.ProjectRoot)"
         }
         catch {
-            $label = if ([string]$profile.ProjectRoot -eq [string]$defaultProjectRoot) {
-                "Add an Illustrator project to begin - $($profile.ProjectRoot)"
+            $label = if ([string]$projectProfile.ProjectRoot -eq [string]$defaultProjectRoot) {
+                "Add an Illustrator project to begin - $($projectProfile.ProjectRoot)"
             }
             else {
-                "Unavailable project - $($profile.ProjectRoot)"
+                "Unavailable project - $($projectProfile.ProjectRoot)"
             }
         }
         [void]$projectSelector.Items.Add([pscustomobject]@{
-            ProjectRoot = $profile.ProjectRoot
+            ProjectRoot = $projectProfile.ProjectRoot
             Label = $label
         })
     }
@@ -475,10 +475,10 @@ function Set-ActiveProject {
     )
 
     $normalizedRoot = Get-NormalizedProjectRoot -Path $ProjectRoot
-    $profile = @($settings.Projects | Where-Object {
+    $projectProfile = @($settings.Projects | Where-Object {
         $_.ProjectRoot.Equals($normalizedRoot, [System.StringComparison]::OrdinalIgnoreCase)
     }) | Select-Object -First 1
-    if (-not $profile) {
+    if (-not $projectProfile) {
         throw "Project is not registered: $normalizedRoot"
     }
 
@@ -486,14 +486,14 @@ function Set-ActiveProject {
         Save-ActiveProjectSettings
     }
     $settings.ActiveProjectRoot = $normalizedRoot
-    $script:activeProjectProfile = $profile
+    $script:activeProjectProfile = $projectProfile
     $script:projectRoot = $normalizedRoot
     $script:suppressSettingsSave = $true
     try {
-        $projectPathBox.Text = $profile.ProjectRoot
-        $stagingPathBox.Text = $profile.StagingRoot
-        $zxpPathBox.Text = $profile.ZxpRoot
-        $certificatesPathBox.Text = $profile.CertificatesRoot
+        $projectPathBox.Text = $projectProfile.ProjectRoot
+        $stagingPathBox.Text = $projectProfile.StagingRoot
+        $zxpPathBox.Text = $projectProfile.ZxpRoot
+        $certificatesPathBox.Text = $projectProfile.CertificatesRoot
         $certificateList.ClearSelection()
         $stagingVersionList.ClearSelection()
         $zxpList.ClearSelection()
@@ -521,10 +521,10 @@ function Add-Project {
         Set-ActiveProject -ProjectRoot $existing.ProjectRoot
         return
     }
-    $profile = New-ProjectProfile -ProjectRoot $normalizedRoot
-    $settings.Projects = @($settings.Projects) + @($profile)
+    $projectProfile = New-ProjectProfile -ProjectRoot $normalizedRoot
+    $settings.Projects = @($settings.Projects) + @($projectProfile)
     Update-ProjectSelector
-    Set-ActiveProject -ProjectRoot $profile.ProjectRoot
+    Set-ActiveProject -ProjectRoot $projectProfile.ProjectRoot
 }
 
 function Remove-ActiveProject {
