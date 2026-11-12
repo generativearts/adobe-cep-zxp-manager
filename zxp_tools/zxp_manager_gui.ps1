@@ -1818,7 +1818,6 @@ for ($index = 0; $index -lt $pathRows.Count; $index++) {
         $button.Text = 'File...'
     }
 }
-$zxpBrowse = $browseButtons['ZXP Packages Root:']
 $certificatesBrowse = $browseButtons['Certificates Folder:']
 $signToolBrowse = $browseButtons['ZXPSignCmd.exe:']
 
