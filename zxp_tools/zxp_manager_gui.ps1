@@ -3066,13 +3066,20 @@ if ($ValidateOnly) {
 
         Refresh-ZxpVersions
         Update-ZxpVerificationStatus -Path $validationZxpPath -Succeeded $true -Output "Timestamp: Valid and within certificate validity dates at time of signing`r`nSignature verified successfully`r`nSigning certificate serial number: 00B9F8355EEE4DDD7D"
-        $newPackage = Get-SelectedZxp
+        $newPackageRow = $null
+        foreach ($row in $zxpList.Rows) {
+            if ($row.Tag -and [string]$row.Tag.Path -eq $validationZxpPath) {
+                $newPackageRow = $row
+                break
+            }
+        }
+        $newPackage = if ($newPackageRow) { $newPackageRow.Tag } else { $null }
         if (-not $newPackage -or
             $newPackage.SignatureStatus -ne 'Valid' -or
             $newPackage.TimestampStatus -ne 'Valid' -or
             $newPackage.SigningCertificateSerial -ne '00B9F8355EEE4DDD7D' -or
-            $zxpList.Rows[0].Cells['Signature'].Value -ne 'Valid' -or
-            $zxpList.Rows[0].Cells['Timestamp'].Value -ne 'Valid') {
+            $newPackageRow.Cells['Signature'].Value -ne 'Valid' -or
+            $newPackageRow.Cells['Timestamp'].Value -ne 'Valid') {
             throw 'Verification status was not applied to a newly discovered ZXP package.'
         }
     }
