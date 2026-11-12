@@ -381,7 +381,7 @@ function Set-PlayerDebugModeAll {
     Update-PlayerDebugModeStatus
 }
 
-function Apply-PlayerDebugModeChanges {
+function Set-PlayerDebugModeChanges {
     param(
         [string]$RegistryRoot = $script:playerDebugModeRegistryRoot,
         [switch]$Confirmed
@@ -2453,7 +2453,7 @@ $playerDebugModeRefreshButton.Add_Click({
 $playerDebugModeEnableButton.Add_Click({ Set-PlayerDebugModeAll -Enabled $true })
 $playerDebugModeDisableButton.Add_Click({ Set-PlayerDebugModeAll -Enabled $false })
 $playerDebugModeApplyButton.Add_Click({
-    try { Apply-PlayerDebugModeChanges }
+    try { Set-PlayerDebugModeChanges }
     catch {
         [void][System.Windows.Forms.MessageBox]::Show(
             $_.Exception.Message,
@@ -3241,7 +3241,7 @@ if ($ValidateOnly) {
         if ($script:pendingPlayerDebugModeVersions.Count -ne $validationVersions.Count) {
             throw 'Enable All did not stage every CEP version for application.'
         }
-        Apply-PlayerDebugModeChanges -RegistryRoot $validationRegistryRoot -Confirmed
+        Set-PlayerDebugModeChanges -RegistryRoot $validationRegistryRoot -Confirmed
         if ($script:pendingPlayerDebugModeVersions.Count -ne 0) {
             throw 'Applying PlayerDebugMode changes did not clear the pending state.'
         }
