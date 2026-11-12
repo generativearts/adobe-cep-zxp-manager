@@ -1650,12 +1650,12 @@ $tabs.DrawMode = [System.Windows.Forms.TabDrawMode]::OwnerDrawFixed
 $tabs.SizeMode = [System.Windows.Forms.TabSizeMode]::Fixed
 $tabs.ItemSize = New-Object System.Drawing.Size(135, 34)
 $tabs.Add_DrawItem({
-    param($sender, $eventArgs)
-    if ($eventArgs.Index -lt 0 -or $eventArgs.Index -ge $sender.TabPages.Count) {
+    param($sourceControl, $eventArgs)
+    if ($eventArgs.Index -lt 0 -or $eventArgs.Index -ge $sourceControl.TabPages.Count) {
         return
     }
 
-    $selected = $eventArgs.Index -eq $sender.SelectedIndex
+    $selected = $eventArgs.Index -eq $sourceControl.SelectedIndex
     $bounds = $eventArgs.Bounds
     $background = if ($selected) {
         [System.Drawing.Color]::FromArgb(58, 76, 101)
@@ -1698,7 +1698,7 @@ $tabs.Add_DrawItem({
             [System.Windows.Forms.TextFormatFlags]::EndEllipsis
         [System.Windows.Forms.TextRenderer]::DrawText(
             $eventArgs.Graphics,
-            $sender.TabPages[$eventArgs.Index].Text,
+            $sourceControl.TabPages[$eventArgs.Index].Text,
             $font,
             $textBounds,
             $textColor,
@@ -1836,7 +1836,7 @@ $signToolStatusLabel.LinkColor = [System.Drawing.Color]::FromArgb(115, 180, 245)
 $signToolStatusLabel.ActiveLinkColor = [System.Drawing.Color]::FromArgb(155, 205, 255)
 $signToolStatusLabel.VisitedLinkColor = [System.Drawing.Color]::FromArgb(160, 178, 200)
 $signToolStatusLabel.Add_LinkClicked({
-    param($sender, $eventArgs)
+    param($sourceControl, $eventArgs)
     try {
         Start-Process -FilePath ([string]$eventArgs.Link.LinkData) -ErrorAction Stop
     }
@@ -2166,7 +2166,7 @@ foreach ($linkDefinition in $aboutLinkDefinitions) {
     $link.VisitedLinkColor = [System.Drawing.Color]::FromArgb(160, 178, 200)
     $link.Links.Add(0, $link.Text.Length, $linkDefinition.Url) | Out-Null
     $link.Add_LinkClicked({
-        param($sender, $eventArgs)
+        param($sourceControl, $eventArgs)
         try {
             Start-Process -FilePath ([string]$eventArgs.Link.LinkData) -ErrorAction Stop
         }
@@ -2419,7 +2419,7 @@ $playerDebugModeList.Add_CurrentCellDirtyStateChanged({
     }
 })
 $playerDebugModeList.Add_CellValueChanged({
-    param($sender, $eventArgs)
+    param($sourceControl, $eventArgs)
     if ($script:updatingPlayerDebugModeGrid -or
         $eventArgs.ColumnIndex -ne 1) {
         return
@@ -2889,7 +2889,7 @@ $signToolBrowse.Add_Click({
 })
 
 $form.Add_FormClosing({
-    param($sender, $eventArgs)
+    param($sourceControl, $eventArgs)
     if ($script:workflowState) {
         $eventArgs.Cancel = $true
         [void][System.Windows.Forms.MessageBox]::Show('Wait for the current workflow to finish before closing the window.', 'Workflow in Progress', 'OK', 'Information')
