@@ -498,7 +498,7 @@ function Set-ActiveProject {
         $zxpList.ClearSelection()
         Update-CertificateList
         Update-StagingVersionList
-        Refresh-ZxpVersions
+        Update-ZxpPackageList
         Update-BaseProjectVersion
         Update-ProjectSelector
     }
@@ -978,7 +978,7 @@ function Update-SelectedStagingPath {
     Save-Settings
 }
 
-function Refresh-ZxpVersions {
+function Update-ZxpPackageList {
     $selectedZxp = Get-SelectedZxp
     $previousPath = if ($selectedZxp) { [string]$selectedZxp.Path } else { [string]$activeProjectProfile.SelectedZxpPath }
     $previousStatuses = @{}
@@ -1349,7 +1349,7 @@ function Complete-Workflow {
             [void][System.Windows.Forms.MessageBox]::Show($ErrorMessage, 'ZXP Workflow Error', 'OK', 'Error')
         }
         else {
-            Refresh-ZxpVersions
+            Update-ZxpPackageList
             if (-not [string]::IsNullOrWhiteSpace([string]$workflow.VerificationPath)) {
                 $verificationOutput = ($workflow.StepOutputs | ForEach-Object { $_.Text }) -join [Environment]::NewLine
                 Update-ZxpVerificationStatus -Path $workflow.VerificationPath -Succeeded $true -Output $verificationOutput
@@ -2393,7 +2393,7 @@ $removeProjectButton.Add_Click({
     }
 })
 $stagingPathBox.Add_LostFocus({ Update-StagingVersionList })
-$zxpPathBox.Add_LostFocus({ Refresh-ZxpVersions })
+$zxpPathBox.Add_LostFocus({ Update-ZxpPackageList })
 $certificatesPathBox.Add_LostFocus({ Update-CertificateList })
 $certificateList.Add_SelectionChanged({
     if (-not $script:updatingCertificateGrid) {
@@ -2727,7 +2727,7 @@ $fullProcessButton.Add_Click({
     }
 })
 
-$zxpRefreshButton.Add_Click({ Refresh-ZxpVersions; Add-Log "ZXP packages found: $($zxpList.Rows.Count)." })
+$zxpRefreshButton.Add_Click({ Update-ZxpPackageList; Add-Log "ZXP packages found: $($zxpList.Rows.Count)." })
 $zxpOpenFolderButton.Add_Click({
     $item = Get-SelectedZxp
     if (-not $item) {
@@ -2802,7 +2802,7 @@ $zxpImportButton.Add_Click({
                 Update-StagingVersionList
             }
         }
-        Refresh-ZxpVersions
+        Update-ZxpPackageList
     }
     catch {
         [void][System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'ZXP Import Failed', 'OK', 'Error')
@@ -2870,7 +2870,7 @@ $zxpDeleteButton.Add_Click({
     if ($answer -eq [System.Windows.Forms.DialogResult]::Yes) {
         Remove-Item -LiteralPath $filePath -Force
         Add-Log "Deleted ZXP version $($item.Version)." ([System.Drawing.Color]::FromArgb(255, 170, 100))
-        Refresh-ZxpVersions
+        Update-ZxpPackageList
     }
 })
 
@@ -2901,7 +2901,7 @@ Update-BaseProjectVersion
 Update-SignToolStatus
 Update-CertificateList
 Update-StagingVersionList
-Refresh-ZxpVersions
+Update-ZxpPackageList
 if ($ValidateOnly) {
     if ($tabs.DrawMode -ne [System.Windows.Forms.TabDrawMode]::OwnerDrawFixed -or
         $tabs.ItemSize.Height -lt 30 -or
@@ -3012,7 +3012,7 @@ if ($ValidateOnly) {
             $zxpList.Rows[0].Cells['CertificateSerial'].Value -ne '00B9F8355EEE4DDD7D') {
             throw 'ZXP signature and timestamp status display validation failed.'
         }
-        Refresh-ZxpVersions
+        Update-ZxpPackageList
         $reloadedPackage = @($zxpList.Rows | ForEach-Object { $_.Tag } | Where-Object { $_.Path -eq $validationPackage.Path })[0]
         if ($reloadedPackage.SignatureStatus -ne 'Valid' -or
             $reloadedPackage.TimestampStatus -ne 'Valid' -or
@@ -3048,7 +3048,7 @@ if ($ValidateOnly) {
         $validationArchive = $null
 
         $zxpPathBox.Text = $validationZxpRoot
-        Refresh-ZxpVersions
+        Update-ZxpPackageList
         $newPackage = Get-SelectedZxp
         if (-not $newPackage -or
             $newPackage.SignatureStatus -ne 'Not verified' -or
@@ -3063,7 +3063,7 @@ if ($ValidateOnly) {
             throw 'Selected ZXP summary does not show file size, modification time, and path.'
         }
 
-        Refresh-ZxpVersions
+        Update-ZxpPackageList
         Update-ZxpVerificationStatus -Path $validationZxpPath -Succeeded $true -Output "Timestamp: Valid and within certificate validity dates at time of signing`r`nSignature verified successfully`r`nSigning certificate serial number: 00B9F8355EEE4DDD7D"
         $newPackageRow = $null
         foreach ($row in $zxpList.Rows) {
@@ -3089,7 +3089,7 @@ if ($ValidateOnly) {
             $validationArchive.Dispose()
         }
         $zxpPathBox.Text = $originalZxpRoot
-        Refresh-ZxpVersions
+        Update-ZxpPackageList
         Remove-Item -LiteralPath $validationZxpRoot -Recurse -Force -ErrorAction SilentlyContinue
     }
     $form.CreateControl()
