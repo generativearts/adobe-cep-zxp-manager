@@ -1,0 +1,11 @@
+/certificates/
+/staging/
+/zxp_packages/
+/zxp_tools/ZXPSignCmd.exe
+*.password.txt
+*.p12
+*.pfx
+*.pem
+*.key
+*.rnd
+.rnd
