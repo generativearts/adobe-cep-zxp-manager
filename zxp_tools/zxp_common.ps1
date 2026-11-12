@@ -31,6 +31,118 @@ function Get-ZxpProjectMetadata {
     }
 }
 
+function Get-ZxpManifest {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($Path)
+    try {
+        $manifestEntry = $archive.GetEntry('CSXS/manifest.xml')
+        if (-not $manifestEntry) {
+            throw "ZXP does not contain CSXS/manifest.xml: $Path"
+        }
+
+        $stream = $manifestEntry.Open()
+        try {
+            $settings = [System.Xml.XmlReaderSettings]::new()
+            $settings.DtdProcessing = [System.Xml.DtdProcessing]::Prohibit
+            $settings.XmlResolver = $null
+            $xmlReader = [System.Xml.XmlReader]::Create($stream, $settings)
+            try {
+                $manifest = [System.Xml.XmlDocument]::new()
+                $manifest.XmlResolver = $null
+                $manifest.Load($xmlReader)
+                return $manifest
+            }
+            finally {
+                $xmlReader.Dispose()
+            }
+        }
+        finally {
+            $stream.Dispose()
+        }
+    }
+    finally {
+        $archive.Dispose()
+    }
+}
+
+function Get-ZxpHostApplications {
+    param([Parameter(Mandatory = $true)][xml]$Manifest)
+
+    $manifestRoot = $Manifest.ExtensionManifest
+    if (-not $manifestRoot) {
+        throw 'CEP manifest has no ExtensionManifest root.'
+    }
+
+    $hostNodes = @($manifestRoot.SelectNodes("./*[local-name()='ExecutionEnvironment']/*[local-name()='HostList']/*[local-name()='Host']"))
+    if (-not $hostNodes.Count) {
+        throw 'CEP manifest does not declare any Adobe hosts in ExecutionEnvironment.HostList.'
+    }
+
+    $hostMap = @{
+        'ILST' = [pscustomobject]@{
+            HostId = 'ILST'
+            ProductName = 'Illustrator'
+            ProcessNamePatterns = @('Illustrator*')
+        }
+        'PHXS' = [pscustomobject]@{
+            HostId = 'PHXS'
+            ProductName = 'Photoshop'
+            ProcessNamePatterns = @('Photoshop*')
+        }
+        'PPRO' = [pscustomobject]@{
+            HostId = 'PPRO'
+            ProductName = 'Premiere Pro'
+            ProcessNamePatterns = @('Adobe Premiere Pro*', 'Premiere Pro*')
+        }
+        'AEFT' = [pscustomobject]@{
+            HostId = 'AEFT'
+            ProductName = 'After Effects'
+            ProcessNamePatterns = @('AfterFX*')
+        }
+        'IDSN' = [pscustomobject]@{
+            HostId = 'IDSN'
+            ProductName = 'InDesign'
+            ProcessNamePatterns = @('InDesign*')
+        }
+    }
+
+    $hostIds = @()
+    foreach ($hostNode in $hostNodes) {
+        $hostId = $hostNode.GetAttribute('Name').Trim().ToUpperInvariant()
+        if ([string]::IsNullOrWhiteSpace($hostId)) {
+            throw 'CEP manifest contains a host entry without a Name.'
+        }
+        if ($hostIds -notcontains $hostId) {
+            $hostIds += $hostId
+        }
+    }
+
+    $unmappedHostIds = @($hostIds | Where-Object { -not $hostMap.ContainsKey($_) })
+    if ($unmappedHostIds.Count) {
+        throw "Cannot safely install this package because these Adobe CEP host IDs are unsupported: $($unmappedHostIds -join ', '). Supported host IDs: $($hostMap.Keys -join ', ')."
+    }
+
+    foreach ($hostId in $hostIds) {
+        $hostMap[$hostId]
+    }
+}
+
+function Get-ZxpRunningHostApplications {
+    param([Parameter(Mandatory = $true)][xml]$Manifest)
+
+    $runningApplications = New-Object 'System.Collections.Generic.List[string]'
+    foreach ($hostApplication in @(Get-ZxpHostApplications -Manifest $Manifest)) {
+        $processes = @(Get-Process -Name $hostApplication.ProcessNamePatterns -ErrorAction SilentlyContinue)
+        if ($processes.Count -gt 0) {
+            $runningApplications.Add($hostApplication.ProductName)
+        }
+    }
+
+    return $runningApplications.ToArray()
+}
+
 function Get-ZxpPackageNameFromBundle {
     param(
         [AllowEmptyString()][string]$BundleName,

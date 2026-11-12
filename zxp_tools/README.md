@@ -1,13 +1,13 @@
-# ZXP Manager for Adobe Illustrator
+# ZXP Manager for Adobe CEP
 
-ZXP Manager for Adobe Illustrator is a Windows PowerShell tool for preparing, signing, verifying, and locally installing Adobe Illustrator CEP extension packages (`.zxp`). Package and staging names are derived from `ExtensionBundleName` in the selected Illustrator project's `CSXS\manifest.xml`; the name is converted to a filename-safe form and combined with the release version.
+ZXP Manager for Adobe CEP is a Windows PowerShell tool for preparing, signing, verifying, and locally installing CEP extension packages (`.zxp`) for supported Adobe hosts. Package and staging names are derived from `ExtensionBundleName` in the selected CEP project's `CSXS\manifest.xml`; the name is converted to a filename-safe form and combined with the release version.
 
 > These tools automate packaging and local testing. They do not submit a release to Adobe Exchange or guarantee that a package meets Adobe's current marketplace requirements. Check Adobe's latest submission, compatibility, and signing requirements before publishing.
 
 ## Requirements
 
 - Windows with Windows PowerShell 5.1.
-- An Adobe Illustrator CEP project root, including `CSXS\manifest.xml`, `client`, and `host`.
+- An Adobe CEP project root, including `CSXS\manifest.xml`, `client`, and `host`. Installation supports the CEP host IDs `ILST` (Illustrator), `PHXS` (Photoshop), `PPRO` (Premiere Pro), `AEFT` (After Effects), and `IDSN` (InDesign). The package's target Adobe applications must support CEP; UXP extensions are not supported. Installation is blocked for missing or unrecognized host IDs.
 - `ZXPSignCmd.exe`. The GUI defaults to the copy beside these scripts; use the **Projects & Settings** tab to select another copy if needed. If the executable is missing, the tab shows a direct download link to Adobe CEP Resources. Obtain the utility from Adobe and review the applicable license and redistribution terms; this project does not redistribute the executable.
 - A signing certificate in PKCS#12 format (`.p12` or `.pfx`) with its private key.
 - Creative Cloud Desktop and Adobe's Unified Plugin Installer Agent (UPIA) for installation. The install script can usually locate UPIA automatically.
@@ -23,14 +23,14 @@ From the repository root, run:
 
 The launcher starts Windows PowerShell in STA mode with its console window hidden; the Windows Forms manager remains visible. If startup fails, an error dialog is shown. It provides these workflows:
 
-- **Projects & Settings** — add, switch, and remove registered Adobe Illustrator CEP projects, and configure project-specific staging, ZXP, and certificate folders alongside the shared timestamp and `ZXPSignCmd.exe` paths. Each project must contain `CSXS\manifest.xml`. Removing a project only unregisters it; it does not delete project files. Settings and recent selections are saved in `%APPDATA%\ZxpManager\settings.json`. Existing single-project settings, including settings from the former project-specific location, are migrated automatically when the generic settings file is first saved.
+- **Projects & Settings** — add, switch, and remove registered Adobe CEP projects, and configure project-specific staging, ZXP, and certificate folders alongside the shared timestamp and `ZXPSignCmd.exe` paths. Each project must contain `CSXS\manifest.xml`. Removing a project only unregisters it; it does not delete project files. Settings and recent selections are saved in `%APPDATA%\ZxpManager\settings.json`. Existing single-project settings, including settings from the former project-specific location, are migrated automatically when the generic settings file is first saved.
 - **Certificates** — view certificates in a table with serial, name, description, and file-creation-time columns. Scan or open the certificate folder, create a self-signed test certificate, or import a `.p12`/`.pfx` certificate with a private key. If a certificate's password file is missing, it remains selectable; signing prompts for its password, validates it, and saves it in a file restricted to the current user, SYSTEM, and local administrators. The selected-certificate details also show its validity start time. File creation time is read from the Windows file system in local time; when a certificate is imported, it may reflect the time the file was copied into the manager's certificate folder rather than when the certificate was originally issued. Select a certificate and choose **Edit Description...** to add or change its description; clearing the field removes it. Descriptions are stored in the user's ZXP Manager settings and keyed by certificate thumbprint, so they persist across project switches and certificate file moves.
-- **CEP Debug** — view `PlayerDebugMode` for CEP versions 10–16 in the current Windows user's `HKCU\Software\Adobe\CSXS.*` keys. Use **Enable All** or **Disable All**, then **Apply Changes** to set every supported version at once. Changes require confirmation and Illustrator must be restarted to take effect. This tab does not change or depend on `install_extension.ps1`.
+- **CEP Debug** — view `PlayerDebugMode` for CEP versions 10–16 in the current Windows user's `HKCU\Software\Adobe\CSXS.*` keys. Use **Enable All** or **Disable All**, then **Apply Changes** to set every supported version at once. The setting is shared by Adobe applications using the same CEP version; restart affected applications after changes. This tab does not change or depend on `install_extension.ps1`.
 - **Staging** — view prepared versions in a table with version, staging-folder, and payload-path columns; build staging, create a ZXP from the selected staging, or run the full **Stage > Sign > Install** workflow. The ZXP creation button is highlighted as the primary action.
 - **ZXP** — view packages in a table with version, filename, file size, last-modified time, signature, timestamp, and signing-certificate serial columns; import, select, verify, install, or remove packages, or show the selected ZXP highlighted in File Explorer. The selected-package summary also shows file size, last-modified time in local time, verification status, and path. Signature, timestamp, and certificate serial are shown after verification; a newly scanned package is marked as not verified. These statuses are held in memory and are not persisted across GUI restarts.
-- **About** — a brief description of ZXP Manager for Adobe Illustrator and a reminder that self-signed certificates are for local testing, not production publishing.
+- **About** — a brief description of ZXP Manager for Adobe CEP and a reminder that self-signed certificates are for local testing, not production publishing.
 
-The GUI requires confirmation for installation and requires Illustrator to be closed. The installer verifies the package before invoking UPIA, then checks the installed manifest and version.
+The GUI requires confirmation for installation and checks that every mapped target Adobe application declared in the package manifest is closed. The installer verifies the package before invoking UPIA, then checks the installed manifest and version. Unknown host IDs are blocked rather than installed without a process check.
 
 ## Command-line workflows
 
@@ -101,7 +101,7 @@ Verification succeeds only when `ZXPSignCmd` reports a successful signature and 
 
 ### 4. Install through UPIA
 
-Close Illustrator, then install a specific package:
+Close the target Adobe application(s) listed in the ZXP manifest, then install a specific package:
 
 ```powershell
 .\zxp_tools\zxp_install.ps1 `
@@ -135,13 +135,13 @@ The project `.gitignore` excludes staging, package, and certificate directories.
 - **Version mismatch during staging** — update the release version consistently in the CEP manifest, `version.json`, and `package.json`.
 - **Signature or timestamp verification failed** — check the certificate, package integrity, system clock, network access to the timestamp service, and the full `ZXPSignCmd` output.
 - **UPIA not found** — install or update Creative Cloud Desktop, or pass `-UPIAPath` explicitly.
-- **Installation or installed-version check failed** — close Illustrator, verify the package's manifest IDs/version, and inspect the UPIA output and installed CEP manifest.
+- **Installation or installed-version check failed** — close the target Adobe applications, verify the package's manifest IDs/version and supported Host IDs, and inspect the UPIA output and installed CEP manifest.
 
 ## Tool inventory
 
 | File | Purpose |
 |---|---|
-| `zxp_manager_gui.ps1` | Windows Forms interface for the publishing workflow |
+| `zxp_manager_gui.ps1` | Windows Forms interface for the Adobe CEP publishing workflow |
 | `zxp_common.ps1` | Shared project metadata and package naming helpers |
 | `zxp_prepare_staging.ps1` | Build and validate the runtime staging payload |
 | `zxp_create_signing_certificate.ps1` | Create a protected self-signed test certificate |

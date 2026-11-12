@@ -10,37 +10,6 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'zxp_common.ps1')
 
-function Get-ZxpManifest {
-    param([Parameter(Mandatory = $true)][string]$Path)
-
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    $archive = [System.IO.Compression.ZipFile]::OpenRead($Path)
-    try {
-        $manifestEntry = $archive.GetEntry('CSXS/manifest.xml')
-        if (-not $manifestEntry) {
-            throw "ZXP does not contain CSXS/manifest.xml: $Path"
-        }
-
-        $stream = $manifestEntry.Open()
-        try {
-            $reader = [System.IO.StreamReader]::new($stream)
-            try {
-                [xml]$manifest = $reader.ReadToEnd()
-                return $manifest
-            }
-            finally {
-                $reader.Dispose()
-            }
-        }
-        finally {
-            $stream.Dispose()
-        }
-    }
-    finally {
-        $archive.Dispose()
-    }
-}
-
 function Find-InstalledExtensionManifest {
     param(
         [Parameter(Mandatory = $true)][string]$BundleId,
@@ -142,12 +111,15 @@ if ([string]::IsNullOrWhiteSpace($packageBundleId) -or
     [string]::IsNullOrWhiteSpace($packageVersion)) {
     throw 'The ZXP manifest is missing its bundle ID, extension ID, or version.'
 }
+$targetHostApplications = @(Get-ZxpHostApplications -Manifest $packageManifest)
+$targetHostNames = @($targetHostApplications | ForEach-Object { $_.ProductName }) -join ', '
 
 & $verifierPath -ZxpPath $ZxpPath -ProjectRoot $projectRoot -SignToolPath $SignToolPath
 
-if ($PSCmdlet.ShouldProcess($ZxpPath, "Install with UPIA at '$UPIAPath'")) {
-    if (Get-Process -Name Illustrator -ErrorAction SilentlyContinue) {
-        throw 'Close Illustrator before installing a ZXP package.'
+if ($PSCmdlet.ShouldProcess($ZxpPath, "Install for $targetHostNames with UPIA at '$UPIAPath'")) {
+    $runningHostApplications = @(Get-ZxpRunningHostApplications -Manifest $packageManifest)
+    if ($runningHostApplications.Count) {
+        throw "Close the target Adobe application(s) before installing: $($runningHostApplications -join ', ')."
     }
 
     & $UPIAPath /install $ZxpPath

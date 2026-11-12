@@ -393,7 +393,7 @@ function Set-PlayerDebugModeChanges {
     }
     if (-not $Confirmed) {
         $answer = [System.Windows.Forms.MessageBox]::Show(
-            "Apply the staged PlayerDebugMode changes for CEP $($versions -join ', ')?`r`nRestart Illustrator for the changes to take effect.",
+            "Apply the staged PlayerDebugMode changes for CEP $($versions -join ', ')?`r`nRestart Adobe applications using these CEP versions for the changes to take effect.",
             'Apply PlayerDebugMode Changes',
             [System.Windows.Forms.MessageBoxButtons]::YesNo,
             [System.Windows.Forms.MessageBoxIcon]::Warning
@@ -427,7 +427,7 @@ function Set-PlayerDebugModeChanges {
         Add-Log $message ([System.Drawing.Color]::FromArgb(255, 115, 115))
         return
     }
-    Add-Log "PlayerDebugMode changes applied for CEP $($versions -join ', '). Restart Illustrator to apply the changes." ([System.Drawing.Color]::FromArgb(120, 210, 145))
+    Add-Log "PlayerDebugMode changes applied for CEP $($versions -join ', '). Restart affected Adobe applications to apply the changes." ([System.Drawing.Color]::FromArgb(120, 210, 145))
 }
 
 function Update-ProjectSelector {
@@ -442,7 +442,7 @@ function Update-ProjectSelector {
         }
         catch {
             $label = if ([string]$projectProfile.ProjectRoot -eq [string]$defaultProjectRoot) {
-                "Add an Illustrator project to begin - $($projectProfile.ProjectRoot)"
+                "Add a CEP project to begin - $($projectProfile.ProjectRoot)"
             }
             else {
                 "Unavailable project - $($projectProfile.ProjectRoot)"
@@ -1419,15 +1419,19 @@ function Get-InstallStep {
         [Parameter(Mandatory = $true)][string]$Path,
         [Parameter(Mandatory = $true)][string]$ProjectRoot
     )
-    if (Get-Process -Name Illustrator -ErrorAction SilentlyContinue) {
-        throw 'Close Illustrator before installing.'
-    }
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
         throw "ZXP package not found: $Path"
     }
+    $packageManifest = Get-ZxpManifest -Path $Path
+    $targetHostApplications = @(Get-ZxpHostApplications -Manifest $packageManifest)
+    $runningHostApplications = @(Get-ZxpRunningHostApplications -Manifest $packageManifest)
+    if ($runningHostApplications.Count) {
+        throw "Close the target Adobe application(s) before installing: $($runningHostApplications -join ', ')."
+    }
+
     $resolvedProjectRoot = [System.IO.Path]::GetFullPath($ProjectRoot)
     $answer = [System.Windows.Forms.MessageBox]::Show(
-        "Install the verified package?`r`n`r`n$Path`r`n`r`nIllustrator must be closed.",
+        "Install the verified package for $(@($targetHostApplications | ForEach-Object { $_.ProductName }) -join ', ')?`r`n`r`n$Path`r`n`r`nClose the target Adobe application(s) before installing.",
         'Confirm Installation',
         [System.Windows.Forms.MessageBoxButtons]::YesNo,
         [System.Windows.Forms.MessageBoxIcon]::Warning
@@ -1628,7 +1632,7 @@ function Set-ResponsiveTabLayout {
 }
 
 $form = New-Object System.Windows.Forms.Form
-$form.Text = 'ZXP Manager for Adobe Illustrator'
+$form.Text = 'ZXP Manager for Adobe CEP'
 $form.StartPosition = 'CenterScreen'
 $form.MinimumSize = New-Object System.Drawing.Size(900, 720)
 $form.Size = New-Object System.Drawing.Size([Math]::Max(1050, [int]$settings.WindowWidth), [Math]::Max(860, [int]$settings.WindowHeight))
@@ -1636,7 +1640,7 @@ $form.BackColor = [System.Drawing.Color]::FromArgb(31, 35, 43)
 $form.ForeColor = [System.Drawing.Color]::FromArgb(232, 236, 242)
 $form.Font = New-Object System.Drawing.Font('Segoe UI', 9)
 
-$title = New-Label 'ZXP Manager for Adobe Illustrator' 20 16 720 34
+$title = New-Label 'ZXP Manager for Adobe CEP' 20 16 720 34
 $title.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 18)
 $title.ForeColor = [System.Drawing.Color]::White
 $form.Controls.Add($title)
@@ -2043,7 +2047,7 @@ $cepDebugLayout.Padding = New-Object System.Windows.Forms.Padding(12)
 [void]$cepDebugLayout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
 [void]$cepDebugLayout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
 [void]$cepDebugLayout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
-$cepDebugHelp = New-Label 'Switch PlayerDebugMode for all supported CEP versions with Enable All or Disable All, then apply the changes. Restart Illustrator after applying.' 0 0 900 42
+$cepDebugHelp = New-Label 'Switch PlayerDebugMode for supported CEP versions with Enable All or Disable All, then apply the changes. The setting is shared by Adobe applications using each CEP version; restart affected applications.' 0 0 900 42
 $cepDebugHelp.Dock = 'Fill'
 $cepDebugHelp.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 8)
 $cepDebugHelp.ForeColor = [System.Drawing.Color]::FromArgb(200, 210, 222)
@@ -2133,11 +2137,11 @@ $aboutLayout.Padding = New-Object System.Windows.Forms.Padding(24, 22, 24, 18)
 [void]$aboutLayout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 76)))
 [void]$aboutLayout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 34)))
 [void]$aboutLayout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 88)))
-$aboutTitle = New-Label 'About ZXP Manager for Adobe Illustrator' 0 0 900 32
+$aboutTitle = New-Label 'About ZXP Manager for Adobe CEP' 0 0 900 32
 $aboutTitle.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 14)
 $aboutTitle.ForeColor = [System.Drawing.Color]::White
 $aboutTitle.Dock = 'Fill'
-$aboutDescription = New-Label 'Prepare Adobe Illustrator CEP extension staging folders, create and verify signed ZXP packages, and install them locally through Adobe UPIA.' 0 0 900 68
+$aboutDescription = New-Label 'Prepare CEP extension staging folders, create and verify signed ZXP packages, and install them locally through Adobe UPIA for supported Adobe hosts.' 0 0 900 68
 $aboutDescription.Dock = 'Fill'
 $aboutDescription.ForeColor = [System.Drawing.Color]::FromArgb(200, 210, 222)
 $aboutDescription.AutoEllipsis = $true
@@ -2148,8 +2152,8 @@ $aboutLinks.WrapContents = $false
 $aboutLinks.AutoSize = $false
 $aboutLinks.Margin = New-Object System.Windows.Forms.Padding(0)
 $aboutLinkDefinitions = @(
-    @{ Text = 'Source code'; Url = 'https://github.com/generativearts/zxp-manager-for-illustrator' }
-    @{ Text = 'MIT License'; Url = 'https://github.com/generativearts/zxp-manager-for-illustrator/blob/main/LICENSE' }
+    @{ Text = 'Source code'; Url = 'https://github.com/generativearts/adobe-cep-zxp-manager' }
+    @{ Text = 'MIT License'; Url = 'https://github.com/generativearts/adobe-cep-zxp-manager/blob/main/LICENSE' }
 )
 foreach ($linkDefinition in $aboutLinkDefinitions) {
     $link = New-Object System.Windows.Forms.LinkLabel
@@ -2686,11 +2690,16 @@ $fullProcessButton.Add_Click({
             )
             if ($answer -ne [System.Windows.Forms.DialogResult]::Yes) { return }
         }
-        if (Get-Process -Name Illustrator -ErrorAction SilentlyContinue) {
-            throw 'Close Illustrator before running the full workflow.'
+        $projectManifestPath = Join-Path $source 'CSXS\manifest.xml'
+        [xml]$projectManifest = Get-Content -LiteralPath $projectManifestPath -Raw
+        $targetHostApplications = @(Get-ZxpHostApplications -Manifest $projectManifest)
+        $targetHostNames = @($targetHostApplications | ForEach-Object { $_.ProductName }) -join ', '
+        $runningHostApplications = @(Get-ZxpRunningHostApplications -Manifest $projectManifest)
+        if ($runningHostApplications.Count) {
+            throw "Close the target Adobe application(s) before running the full workflow: $($runningHostApplications -join ', ')."
         }
         $installAnswer = [System.Windows.Forms.MessageBox]::Show(
-            "The package will be installed via UPIA after it is created and verified:`r`n$output`r`n`r`nIllustrator must remain closed. Continue?",
+            "The package will be installed via UPIA for $targetHostNames after it is created and verified:`r`n$output`r`n`r`nClose the target Adobe application(s) before continuing. Continue?",
             'Confirm Full Workflow',
             [System.Windows.Forms.MessageBoxButtons]::YesNo,
             [System.Windows.Forms.MessageBoxIcon]::Warning
@@ -2914,10 +2923,10 @@ if ($ValidateOnly) {
     $aboutLicenseLink = @($aboutLinks.Controls | Where-Object { $_.Text -eq 'MIT License' }) | Select-Object -First 1
     if (-not $aboutSourceLink -or
         $aboutSourceLink.Links.Count -ne 1 -or
-        $aboutSourceLink.Links[0].LinkData -ne 'https://github.com/generativearts/zxp-manager-for-illustrator' -or
+        $aboutSourceLink.Links[0].LinkData -ne 'https://github.com/generativearts/adobe-cep-zxp-manager' -or
         -not $aboutLicenseLink -or
         $aboutLicenseLink.Links.Count -ne 1 -or
-        $aboutLicenseLink.Links[0].LinkData -ne 'https://github.com/generativearts/zxp-manager-for-illustrator/blob/main/LICENSE' -or
+        $aboutLicenseLink.Links[0].LinkData -ne 'https://github.com/generativearts/adobe-cep-zxp-manager/blob/main/LICENSE' -or
         $aboutNotice.Text -notmatch 'MIT licensed' -or
         $aboutNotice.Text -notmatch 'ZXPSignCmd') {
         throw 'About tab source, license links, or third-party licensing notice are missing.'

@@ -22,7 +22,7 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          $files = Get-ChildItem -Path .\zxp_tools -Filter '*.ps1' -File
+          $files = Get-ChildItem -Path .\zxp_tools, .\tests -Filter '*.ps1' -File -Recurse
           $parseProblems = @()
 
           foreach ($file in $files) {
@@ -66,3 +66,23 @@ jobs:
           }
 
           Write-Host "PSScriptAnalyzer found no violations."
+
+      - name: Install Pester
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          Install-Module -Name Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force -Repository PSGallery
+
+      - name: Run Pester tests
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module Pester -RequiredVersion 5.7.1 -ErrorAction Stop
+          $result = Invoke-Pester -Path .\tests -PassThru
+
+          if ($result.FailedCount -gt 0) {
+              throw "Pester reported $($result.FailedCount) failed test(s)."
+          }
+
+          Write-Host "Pester passed $($result.PassedCount) test(s)."
