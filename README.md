@@ -1,5 +1,7 @@
 # ZXP Manager for Adobe Illustrator
 
+[![PowerShell validation](https://github.com/generativearts/zxp-manager-for-illustrator/actions/workflows/powershell-validation.yml/badge.svg)](https://github.com/generativearts/zxp-manager-for-illustrator/actions/workflows/powershell-validation.yml)
+
 ZXP Manager for Adobe Illustrator is a Windows PowerShell tool for preparing, signing, verifying, and locally installing Adobe Illustrator CEP extension packages (`.zxp`). Package and staging names are derived from `ExtensionBundleName` in the selected Illustrator project's `CSXS\manifest.xml`; the name is converted to a filename-safe form and combined with the release version.
 
 This is a standalone manager project. It does not contain the Illustrator extension source project. On first launch, use **Projects & Settings** to add the folder containing the extension's `CSXS\manifest.xml` (for example, your Calendarium Studio project), then select that project. The manager stores its settings under `%APPDATA%\ZxpManager`.
@@ -38,7 +40,7 @@ The GUI requires confirmation for installation and requires Illustrator to be cl
 
 ## Automated checks
 
-GitHub Actions parses all PowerShell scripts on pushes and pull requests targeting `main`, using Windows PowerShell 5.1. The GUI's `-ValidateOnly` checks can also be run locally with `powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File .\zxp_tools\zxp_manager_gui.ps1 -ValidateOnly`.
+GitHub Actions parses the PowerShell scripts and runs PSScriptAnalyzer with the focused rules in `.PSScriptAnalyzerSettings.psd1` on pushes and pull requests targeting `main`. The badge reports whether these checks pass; it is not a security certification. The GUI's `-ValidateOnly` checks can also be run locally with `powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File .\zxp_tools\zxp_manager_gui.ps1 -ValidateOnly`.
 
 ## Screenshots
 

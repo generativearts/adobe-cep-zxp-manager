@@ -45,3 +45,24 @@ jobs:
           }
 
           Write-Host "Parsed $($files.Count) PowerShell scripts successfully."
+
+      - name: Install PSScriptAnalyzer
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.24.0 -Scope CurrentUser -Force -Repository PSGallery
+
+      - name: Analyze PowerShell scripts
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module PSScriptAnalyzer -RequiredVersion 1.24.0 -ErrorAction Stop
+          $findings = @(Invoke-ScriptAnalyzer -Path .\zxp_tools -Recurse -Settings .\.PSScriptAnalyzerSettings.psd1)
+
+          if ($findings.Count -gt 0) {
+              $findings | Format-Table -AutoSize Path, Line, RuleName, Severity, Message | Out-String | Write-Host
+              throw "PSScriptAnalyzer found $($findings.Count) violation(s)."
+          }
+
+          Write-Host "PSScriptAnalyzer found no violations."
