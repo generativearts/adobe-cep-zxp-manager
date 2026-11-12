@@ -496,7 +496,7 @@ function Set-ActiveProject {
         $certificateList.ClearSelection()
         $stagingVersionList.ClearSelection()
         $zxpList.ClearSelection()
-        Refresh-Certificates
+        Update-CertificateList
         Refresh-StagingVersions
         Refresh-ZxpVersions
         Update-BaseProjectVersion
@@ -671,7 +671,7 @@ function Edit-SelectedCertificateDescription {
             $settings.CertificateDescriptions[$thumbprint] = $description
         }
         Save-Settings
-        Refresh-Certificates
+        Update-CertificateList
     }
     $dialog.Dispose()
 }
@@ -790,7 +790,7 @@ function Read-ZxpManifest {
     }
 }
 
-function Refresh-Certificates {
+function Update-CertificateList {
     $previous = Get-SelectedCertificateSerial
     $previousCertificate = Get-SelectedCertificate
     $previousThumbprint = if ($previousCertificate) { [string]$previousCertificate.Thumbprint } else { '' }
@@ -1358,7 +1358,7 @@ function Complete-Workflow {
             $statusLabel.Text = 'Completed successfully'
             $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(120, 210, 145)
             Refresh-StagingVersions
-            Refresh-Certificates
+            Update-CertificateList
         }
     }
     catch {
@@ -1525,7 +1525,7 @@ function Ensure-CertificatePasswordFile {
         $createdPasswordFile = $true
         Set-RestrictedFileAcl -Path $passwordPath
         Add-Log "Saved a restricted password file for certificate $serial." ([System.Drawing.Color]::FromArgb(120, 210, 145))
-        Refresh-Certificates
+        Update-CertificateList
         return $true
     }
     catch {
@@ -2394,7 +2394,7 @@ $removeProjectButton.Add_Click({
 })
 $stagingPathBox.Add_LostFocus({ Refresh-StagingVersions })
 $zxpPathBox.Add_LostFocus({ Refresh-ZxpVersions })
-$certificatesPathBox.Add_LostFocus({ Refresh-Certificates })
+$certificatesPathBox.Add_LostFocus({ Update-CertificateList })
 $certificateList.Add_SelectionChanged({
     if (-not $script:updatingCertificateGrid) {
         Save-Settings
@@ -2469,7 +2469,7 @@ $tabs.Add_SelectedIndexChanged({
     }
 })
 
-$certRefreshButton.Add_Click({ Refresh-Certificates; Add-Log "Certificate scan complete: $($certificateList.Rows.Count) certificate(s)." })
+$certRefreshButton.Add_Click({ Update-CertificateList; Add-Log "Certificate scan complete: $($certificateList.Rows.Count) certificate(s)." })
 $certOpenFolderButton.Add_Click({
     $certificateRoot = $certificatesPathBox.Text.Trim()
     if ([string]::IsNullOrWhiteSpace($certificateRoot) -or
@@ -2553,7 +2553,7 @@ $certImportButton.Add_Click({
         Set-RestrictedFileAcl $destinationCertificate
         Set-RestrictedFileAcl $destinationPassword
         Add-Log "Imported certificate $serial into '$root'." ([System.Drawing.Color]::FromArgb(120, 210, 145))
-        Refresh-Certificates
+        Update-CertificateList
     }
     catch {
         if ($createdCertificateFile -and $destinationCertificate -and (Test-Path -LiteralPath $destinationCertificate)) {
@@ -2899,7 +2899,7 @@ $form.Add_FormClosing({
 
 Update-BaseProjectVersion
 Update-SignToolStatus
-Refresh-Certificates
+Update-CertificateList
 Refresh-StagingVersions
 Refresh-ZxpVersions
 if ($ValidateOnly) {
