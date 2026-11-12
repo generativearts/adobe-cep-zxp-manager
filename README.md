@@ -36,6 +36,10 @@ The launcher starts Windows PowerShell in STA mode with its console window hidde
 
 The GUI requires confirmation for installation and requires Illustrator to be closed. The installer verifies the package before invoking UPIA, then checks the installed manifest and version.
 
+## Automated checks
+
+GitHub Actions parses the PowerShell scripts and runs the GUI's `-ValidateOnly` checks on pushes and pull requests targeting `main`, using Windows PowerShell 5.1.
+
 ## Screenshots
 
 | Projects & Settings | Certificates |

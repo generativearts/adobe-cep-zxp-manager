@@ -1,0 +1,51 @@
+name: PowerShell validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Windows PowerShell 5.1
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Parse PowerShell scripts
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = Get-ChildItem -Path .\zxp_tools -Filter '*.ps1' -File
+          $parseProblems = @()
+
+          foreach ($file in $files) {
+              $tokens = $null
+              $fileErrors = $null
+              [void][System.Management.Automation.Language.Parser]::ParseFile(
+                  $file.FullName,
+                  [ref]$tokens,
+                  [ref]$fileErrors
+              )
+
+              foreach ($parseError in $fileErrors) {
+                  $parseProblems += '{0}:{1}: {2}' -f $file.Name, $parseError.Extent.StartLineNumber, $parseError.Message
+              }
+          }
+
+          if ($parseProblems.Count -gt 0) {
+              $parseProblems | ForEach-Object { Write-Host $_ -ForegroundColor Red }
+              throw "Found $($parseProblems.Count) PowerShell parser error(s)."
+          }
+
+          Write-Host "Parsed $($files.Count) PowerShell scripts successfully."
+
+      - name: Validate GUI behavior
+        shell: cmd
+        run: powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -STA -File .\zxp_tools\zxp_manager_gui.ps1 -ValidateOnly
