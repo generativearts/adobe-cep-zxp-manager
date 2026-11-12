@@ -1,6 +1,7 @@
 # ZXP Manager for Adobe Illustrator
 
 [![PowerShell validation](https://github.com/generativearts/zxp-manager-for-illustrator/actions/workflows/powershell-validation.yml/badge.svg)](https://github.com/generativearts/zxp-manager-for-illustrator/actions/workflows/powershell-validation.yml)
+[![Secret scan](https://github.com/generativearts/zxp-manager-for-illustrator/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/generativearts/zxp-manager-for-illustrator/actions/workflows/secret-scan.yml)
 
 ZXP Manager for Adobe Illustrator is a Windows PowerShell tool for preparing, signing, verifying, and locally installing Adobe Illustrator CEP extension packages (`.zxp`). Package and staging names are derived from `ExtensionBundleName` in the selected Illustrator project's `CSXS\manifest.xml`; the name is converted to a filename-safe form and combined with the release version.
 
@@ -40,7 +41,7 @@ The GUI requires confirmation for installation and requires Illustrator to be cl
 
 ## Automated checks
 
-GitHub Actions parses the PowerShell scripts and runs PSScriptAnalyzer with the focused rules in `.PSScriptAnalyzerSettings.psd1` on pushes and pull requests targeting `main`. The badge reports whether these checks pass; it is not a security certification. The GUI's `-ValidateOnly` checks can also be run locally with `powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File .\zxp_tools\zxp_manager_gui.ps1 -ValidateOnly`.
+GitHub Actions parses the PowerShell scripts and runs PSScriptAnalyzer with the focused rules in `.PSScriptAnalyzerSettings.psd1` on pushes and pull requests targeting `main`. A separate Gitleaks workflow checks the full Git history for secrets on pushes and pull requests. The badges report whether these checks pass; they are not security certifications. The GUI's `-ValidateOnly` checks can also be run locally with `powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File .\zxp_tools\zxp_manager_gui.ps1 -ValidateOnly`.
 
 ## Screenshots
 
