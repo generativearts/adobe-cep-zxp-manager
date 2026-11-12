@@ -1650,13 +1650,13 @@ $tabs.DrawMode = [System.Windows.Forms.TabDrawMode]::OwnerDrawFixed
 $tabs.SizeMode = [System.Windows.Forms.TabSizeMode]::Fixed
 $tabs.ItemSize = New-Object System.Drawing.Size(135, 34)
 $tabs.Add_DrawItem({
-    param($sourceControl, $eventArgs)
-    if ($eventArgs.Index -lt 0 -or $eventArgs.Index -ge $sourceControl.TabPages.Count) {
+    param($sourceControl, $callbackArgs)
+    if ($callbackArgs.Index -lt 0 -or $callbackArgs.Index -ge $sourceControl.TabPages.Count) {
         return
     }
 
-    $selected = $eventArgs.Index -eq $sourceControl.SelectedIndex
-    $bounds = $eventArgs.Bounds
+    $selected = $callbackArgs.Index -eq $sourceControl.SelectedIndex
+    $bounds = $callbackArgs.Bounds
     $background = if ($selected) {
         [System.Drawing.Color]::FromArgb(58, 76, 101)
     }
@@ -1665,7 +1665,7 @@ $tabs.Add_DrawItem({
     }
     $backgroundBrush = New-Object System.Drawing.SolidBrush($background)
     try {
-        $eventArgs.Graphics.FillRectangle($backgroundBrush, $bounds)
+        $callbackArgs.Graphics.FillRectangle($backgroundBrush, $bounds)
     }
     finally {
         $backgroundBrush.Dispose()
@@ -1674,7 +1674,7 @@ $tabs.Add_DrawItem({
         $accentBounds = New-Object System.Drawing.Rectangle($bounds.X, ($bounds.Bottom - 3), $bounds.Width, 3)
         $accentBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(92, 161, 230))
         try {
-            $eventArgs.Graphics.FillRectangle($accentBrush, $accentBounds)
+            $callbackArgs.Graphics.FillRectangle($accentBrush, $accentBounds)
         }
         finally {
             $accentBrush.Dispose()
@@ -1697,8 +1697,8 @@ $tabs.Add_DrawItem({
             [System.Windows.Forms.TextFormatFlags]::SingleLine -bor
             [System.Windows.Forms.TextFormatFlags]::EndEllipsis
         [System.Windows.Forms.TextRenderer]::DrawText(
-            $eventArgs.Graphics,
-            $sourceControl.TabPages[$eventArgs.Index].Text,
+            $callbackArgs.Graphics,
+            $sourceControl.TabPages[$callbackArgs.Index].Text,
             $font,
             $textBounds,
             $textColor,
@@ -1836,9 +1836,9 @@ $signToolStatusLabel.LinkColor = [System.Drawing.Color]::FromArgb(115, 180, 245)
 $signToolStatusLabel.ActiveLinkColor = [System.Drawing.Color]::FromArgb(155, 205, 255)
 $signToolStatusLabel.VisitedLinkColor = [System.Drawing.Color]::FromArgb(160, 178, 200)
 $signToolStatusLabel.Add_LinkClicked({
-    param($sourceControl, $eventArgs)
+    param($sourceControl, $callbackArgs)
     try {
-        Start-Process -FilePath ([string]$eventArgs.Link.LinkData) -ErrorAction Stop
+        Start-Process -FilePath ([string]$callbackArgs.Link.LinkData) -ErrorAction Stop
     }
     catch {
         [void][System.Windows.Forms.MessageBox]::Show(
@@ -2166,9 +2166,9 @@ foreach ($linkDefinition in $aboutLinkDefinitions) {
     $link.VisitedLinkColor = [System.Drawing.Color]::FromArgb(160, 178, 200)
     $link.Links.Add(0, $link.Text.Length, $linkDefinition.Url) | Out-Null
     $link.Add_LinkClicked({
-        param($sourceControl, $eventArgs)
+        param($sourceControl, $callbackArgs)
         try {
-            Start-Process -FilePath ([string]$eventArgs.Link.LinkData) -ErrorAction Stop
+            Start-Process -FilePath ([string]$callbackArgs.Link.LinkData) -ErrorAction Stop
         }
         catch {
             [void][System.Windows.Forms.MessageBox]::Show(
@@ -2419,12 +2419,12 @@ $playerDebugModeList.Add_CurrentCellDirtyStateChanged({
     }
 })
 $playerDebugModeList.Add_CellValueChanged({
-    param($sourceControl, $eventArgs)
+    param($sourceControl, $callbackArgs)
     if ($script:updatingPlayerDebugModeGrid -or
-        $eventArgs.ColumnIndex -ne 1) {
+        $callbackArgs.ColumnIndex -ne 1) {
         return
     }
-    $rowIndex = $eventArgs.RowIndex
+    $rowIndex = $callbackArgs.RowIndex
     if ($rowIndex -lt 0 -or $rowIndex -ge $playerDebugModeList.Rows.Count) {
         return
     }
@@ -2889,9 +2889,9 @@ $signToolBrowse.Add_Click({
 })
 
 $form.Add_FormClosing({
-    param($sourceControl, $eventArgs)
+    param($sourceControl, $callbackArgs)
     if ($script:workflowState) {
-        $eventArgs.Cancel = $true
+        $callbackArgs.Cancel = $true
         [void][System.Windows.Forms.MessageBox]::Show('Wait for the current workflow to finish before closing the window.', 'Workflow in Progress', 'OK', 'Information')
         return
     }
