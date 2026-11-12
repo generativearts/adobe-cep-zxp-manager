@@ -497,7 +497,7 @@ function Set-ActiveProject {
         $stagingVersionList.ClearSelection()
         $zxpList.ClearSelection()
         Update-CertificateList
-        Refresh-StagingVersions
+        Update-StagingVersionList
         Refresh-ZxpVersions
         Update-BaseProjectVersion
         Update-ProjectSelector
@@ -892,7 +892,7 @@ function Update-CertificateList {
     }
 }
 
-function Refresh-StagingVersions {
+function Update-StagingVersionList {
     $selectedStaging = Get-SelectedStaging
     $previousVersion = if ($selectedStaging) { [string]$selectedStaging.Version } else { [string]$activeProjectProfile.SelectedStagingVersion }
     $script:updatingStagingGrid = $true
@@ -1357,7 +1357,7 @@ function Complete-Workflow {
             Add-Log 'Workflow completed successfully.' ([System.Drawing.Color]::FromArgb(120, 210, 145))
             $statusLabel.Text = 'Completed successfully'
             $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(120, 210, 145)
-            Refresh-StagingVersions
+            Update-StagingVersionList
             Update-CertificateList
         }
     }
@@ -2392,7 +2392,7 @@ $removeProjectButton.Add_Click({
         [void][System.Windows.Forms.MessageBox]::Show($message, 'Could Not Remove Project', 'OK', 'Error')
     }
 })
-$stagingPathBox.Add_LostFocus({ Refresh-StagingVersions })
+$stagingPathBox.Add_LostFocus({ Update-StagingVersionList })
 $zxpPathBox.Add_LostFocus({ Refresh-ZxpVersions })
 $certificatesPathBox.Add_LostFocus({ Update-CertificateList })
 $certificateList.Add_SelectionChanged({
@@ -2592,7 +2592,7 @@ $stageBuildButton.Add_Click({
         [void][System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Staging Error', 'OK', 'Error')
     }
 })
-$stageRefreshButton.Add_Click({ Refresh-StagingVersions; Add-Log "Staging versions found: $($stagingVersionList.Rows.Count)." })
+$stageRefreshButton.Add_Click({ Update-StagingVersionList; Add-Log "Staging versions found: $($stagingVersionList.Rows.Count)." })
 $stageDeleteButton.Add_Click({
     $item = Get-SelectedStaging
     if (-not $item) {
@@ -2607,7 +2607,7 @@ $stageDeleteButton.Add_Click({
     }
     if (-not (Test-Path -LiteralPath $directory -PathType Container)) {
         [void][System.Windows.Forms.MessageBox]::Show('The selected staging folder no longer exists. Refresh the version list.', 'Staging Not Found', 'OK', 'Warning')
-        Refresh-StagingVersions
+        Update-StagingVersionList
         return
     }
     if ((Get-Item -LiteralPath $directory -Force).Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
@@ -2626,7 +2626,7 @@ $stageDeleteButton.Add_Click({
     if ($answer -eq [System.Windows.Forms.DialogResult]::Yes) {
         Remove-Item -LiteralPath $directory -Recurse -Force
         Add-Log "Deleted staging version $($item.Version)." ([System.Drawing.Color]::FromArgb(255, 170, 100))
-        Refresh-StagingVersions
+        Update-StagingVersionList
     }
 })
 
@@ -2799,7 +2799,7 @@ $zxpImportButton.Add_Click({
             if ($removeSource -eq [System.Windows.Forms.DialogResult]::Yes) {
                 Remove-Item -LiteralPath $sourceFullPath -Force
                 Add-Log 'Deleted the old ZXP copy from staging.' ([System.Drawing.Color]::FromArgb(120, 210, 145))
-                Refresh-StagingVersions
+                Update-StagingVersionList
             }
         }
         Refresh-ZxpVersions
@@ -2900,7 +2900,7 @@ $form.Add_FormClosing({
 Update-BaseProjectVersion
 Update-SignToolStatus
 Update-CertificateList
-Refresh-StagingVersions
+Update-StagingVersionList
 Refresh-ZxpVersions
 if ($ValidateOnly) {
     if ($tabs.DrawMode -ne [System.Windows.Forms.TabDrawMode]::OwnerDrawFixed -or
