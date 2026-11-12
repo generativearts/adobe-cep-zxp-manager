@@ -1485,7 +1485,7 @@ function Get-PasswordFromDialog {
     return $value
 }
 
-function Ensure-CertificatePasswordFile {
+function Set-CertificatePasswordFile {
     param([Parameter(Mandatory = $true)][string]$Serial)
 
     $serial = $Serial.ToUpperInvariant()
@@ -2645,7 +2645,7 @@ $signButton.Add_Click({
         return
     }
     try {
-        if (-not (Ensure-CertificatePasswordFile -Serial $certificateSerial)) { return }
+        if (-not (Set-CertificatePasswordFile -Serial $certificateSerial)) { return }
     }
     catch {
         [void][System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Certificate Password Error', 'OK', 'Error')
@@ -2700,7 +2700,7 @@ $fullProcessButton.Add_Click({
         )
         if ($installAnswer -ne [System.Windows.Forms.DialogResult]::Yes) { return }
         try {
-            if (-not (Ensure-CertificatePasswordFile -Serial $certificateSerial)) { return }
+            if (-not (Set-CertificatePasswordFile -Serial $certificateSerial)) { return }
         }
         catch {
             [void][System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Certificate Password Error', 'OK', 'Error')
