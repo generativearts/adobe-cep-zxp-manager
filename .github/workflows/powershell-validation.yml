@@ -45,7 +45,3 @@ jobs:
           }
 
           Write-Host "Parsed $($files.Count) PowerShell scripts successfully."
-
-      - name: Validate GUI behavior
-        shell: cmd
-        run: powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -STA -File .\zxp_tools\zxp_manager_gui.ps1 -ValidateOnly

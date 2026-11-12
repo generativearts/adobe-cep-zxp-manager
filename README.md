@@ -38,7 +38,7 @@ The GUI requires confirmation for installation and requires Illustrator to be cl
 
 ## Automated checks
 
-GitHub Actions parses the PowerShell scripts and runs the GUI's `-ValidateOnly` checks on pushes and pull requests targeting `main`, using Windows PowerShell 5.1.
+GitHub Actions parses all PowerShell scripts on pushes and pull requests targeting `main`, using Windows PowerShell 5.1. The GUI's `-ValidateOnly` checks can also be run locally with `powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File .\zxp_tools\zxp_manager_gui.ps1 -ValidateOnly`.
 
 ## Screenshots
 
