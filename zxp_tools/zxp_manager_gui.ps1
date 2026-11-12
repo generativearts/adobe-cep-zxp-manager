@@ -1818,7 +1818,6 @@ for ($index = 0; $index -lt $pathRows.Count; $index++) {
         $button.Text = 'File...'
     }
 }
-$certificatesBrowse = $browseButtons['Certificates Folder:']
 $signToolBrowse = $browseButtons['ZXPSignCmd.exe:']
 
 $settingsHint = New-Label 'Settings are saved between runs in your user profile.' 20 300 920 28
@@ -1978,7 +1977,7 @@ $signButton.BackColor = [System.Drawing.Color]::FromArgb(43, 112, 181)
 $signButton.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(89, 160, 225)
 $signButton.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(56, 132, 205)
 $fullProcessButton = New-Button 'Stage > Sign > Install' 938 340 270
-$stagingLayout = Set-ResponsiveTabLayout $stagingTab @($stagingHelp, $baseProjectVersionLabel) $stagingVersionList $stagingPathLabel @($signButton, $fullProcessButton, $stageBuildButton, $stageRefreshButton, $stageDeleteButton)
+Set-ResponsiveTabLayout $stagingTab @($stagingHelp, $baseProjectVersionLabel) $stagingVersionList $stagingPathLabel @($signButton, $fullProcessButton, $stageBuildButton, $stageRefreshButton, $stageDeleteButton) | Out-Null
 
 $zxpHelp = New-Label 'Packages are read from the selected root; signatures are verified again before installation.' 18 16 920 30
 $zxpList = New-Object System.Windows.Forms.DataGridView
