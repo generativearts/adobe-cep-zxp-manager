@@ -163,7 +163,6 @@ $activeProjectProfile = @($settings.Projects | Where-Object {
 $settings.ActiveProjectRoot = $activeProjectProfile.ProjectRoot
 $projectRoot = [string]$activeProjectProfile.ProjectRoot
 $signToolPath = [System.IO.Path]::GetFullPath([string]$settings.SignToolPath)
-$manifestPath = Join-Path $projectRoot 'CSXS\manifest.xml'
 $script:playerDebugModeRegistryRoot = 'Software\Adobe\CSXS'
 $script:pendingPlayerDebugModeVersions = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
 $script:pendingPlayerDebugModeValues = @{}
