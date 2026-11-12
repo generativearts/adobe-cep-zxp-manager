@@ -3074,13 +3074,15 @@ if ($ValidateOnly) {
             }
         }
         $newPackage = if ($newPackageRow) { $newPackageRow.Tag } else { $null }
-        if (-not $newPackage -or
-            $newPackage.SignatureStatus -ne 'Valid' -or
+        if (-not $newPackage) {
+            throw "Validation ZXP package was not found after refresh: $validationZxpPath"
+        }
+        if ($newPackage.SignatureStatus -ne 'Valid' -or
             $newPackage.TimestampStatus -ne 'Valid' -or
             $newPackage.SigningCertificateSerial -ne '00B9F8355EEE4DDD7D' -or
             $newPackageRow.Cells['Signature'].Value -ne 'Valid' -or
             $newPackageRow.Cells['Timestamp'].Value -ne 'Valid') {
-            throw 'Verification status was not applied to a newly discovered ZXP package.'
+            throw "Verification status was not applied to a newly discovered ZXP package (item: $($newPackage.SignatureStatus)/$($newPackage.TimestampStatus)/$($newPackage.SigningCertificateSerial); row: $($newPackageRow.Cells['Signature'].Value)/$($newPackageRow.Cells['Timestamp'].Value))."
         }
     }
     finally {
